@@ -2,30 +2,84 @@
 <html>
 <head>
     <title>Eurovision Voting</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>Vote for Your Top 3 Countries</h1>
-    <form method="POST" action="/vote">
-        {% for country in countries %}
-            <label>
-                <input type="checkbox" name="votes" value="{{ country }}">
-                {{ country }}
-            </label><br>
-        {% endfor %}
-        <h2>Predict the Winner:</h2>
-        <select name="prediction">
-            {% for country in countries %}
+    <div class="container">
+        <h1>Vote for Your Top 3 Eurovision Picks</h1>
+
+        {% if message %}
+        <div class="alert">{{ message }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <label>First Choice:</label>
+            <select name="vote1" required>
+                {% for country in countries %}
                 <option value="{{ country }}">{{ country }}</option>
-            {% endfor %}
-        </select><br><br>
-        <button type="submit">Submit Vote</button>
-    </form>
+                {% endfor %}
+            </select>
+
+            <label>Second Choice:</label>
+            <select name="vote2" required>
+                {% for country in countries %}
+                <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Third Choice:</label>
+            <select name="vote3" required>
+                {% for country in countries %}
+                <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Your Prediction (Winner):</label>
+            <select name="prediction" required>
+                {% for country in countries %}
+                <option value="{{ country }}">{{ country }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Submit Vote</button>
+        </form>
+
+        <h2>Live Voting Results</h2>
+        <canvas id="voteChart" width="400" height="200"></canvas>
+
+        <h2>Prediction Trends</h2>
+        <canvas id="predictionChart" width="400" height="200"></canvas>
+    </div>
+
     <script>
-        document.querySelector('form').addEventListener('submit', function (e) {
-            const checked = document.querySelectorAll('input[type="checkbox"]:checked');
-            if (checked.length !== 3) {
-                alert('Please select exactly 3 countries.');
-                e.preventDefault();
+        const voteData = {{ votes|tojson }};
+        const predictionData = {{ predictions|tojson }};
+
+        const voteCtx = document.getElementById('voteChart').getContext('2d');
+        const predictionCtx = document.getElementById('predictionChart').getContext('2d');
+
+        new Chart(voteCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(voteData),
+                datasets: [{
+                    label: 'Total Points',
+                    data: Object.values(voteData),
+                    backgroundColor: '#0055a5'
+                }]
+            }
+        });
+
+        new Chart(predictionCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(predictionData),
+                datasets: [{
+                    label: 'Predicted Winners',
+                    data: Object.values(predictionData),
+                    backgroundColor: '#a50034'
+                }]
             }
         });
     </script>

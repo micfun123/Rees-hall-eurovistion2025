@@ -1,44 +1,41 @@
 from flask import Flask, render_template, request, redirect, make_response
-import json
 from collections import defaultdict
+import json
 
 app = Flask(__name__)
 
-# In-memory store (replace with database for production)
+countries = ["Norway", "Luxembourg", "Estonia", "Israel", "Lithuania", "Spain", "Ukraine ", "United Kingdom","Austria","Iceland","Latvia","Netherlands","Finland","Italy","Poland","Germany","Greece","Armenia","Malta","Portugal","Denmark","Sweden","France","San Marino","Albania"]
+
+
 votes = defaultdict(int)
 predictions = defaultdict(int)
 
-# List of countries (example)
-countries = ["Norway", "Luxembourg", "Estonia", "Israel", "Lithuania", "Spain", "Ukraine ", "United Kingdom","Austria","Iceland","Latvia","Netherlands","Finland","Italy","Poland","Germany","Greece","Armenia","Malta","Portugal","Denmark","Sweden","France","San Marino","Albania"]
-
-@app.route('/')
+@app.route("/", methods=["GET", "POST"])
 def index():
-    if request.cookies.get('voted'):
-        return redirect('/results')
-    return render_template('index.html', countries=countries)
+    voted = request.cookies.get("voted")
+    message = None
 
-@app.route('/vote', methods=['POST'])
-def vote():
-    if request.cookies.get('voted'):
-        return redirect('/results')
+    if request.method == "POST":
+        if voted:
+            message = "You've already voted!"
+        else:
+            v1 = request.form.get("vote1")
+            v2 = request.form.get("vote2")
+            v3 = request.form.get("vote3")
+            pred = request.form.get("prediction")
 
-    selected = request.form.getlist('votes')
-    prediction = request.form.get('prediction')
+            if v1 and v2 and v3 and pred:
+                votes[v1] += 3
+                votes[v2] += 2
+                votes[v3] += 1
+                predictions[pred] += 1
+                message = "Thank you for voting!"
+                resp = make_response(redirect("/"))
+                resp.set_cookie("voted", "yes", max_age=60*60*24*30)  # 30 days
+                return resp
 
-    if len(selected) != 3 or prediction not in countries:
-        return "Invalid vote", 400
+    return render_template("index.html", countries=countries, votes=dict(votes),
+                           predictions=dict(predictions), message=message)
 
-    for country in selected:
-        votes[country] += 1
-    predictions[prediction] += 1
-
-    resp = make_response(redirect('/results'))
-    resp.set_cookie('voted', 'true', max_age=60*60*24*365)  # 1 year
-    return resp
-
-@app.route('/results')
-def results():
-    return render_template('results.html', votes=dict(votes), predictions=dict(predictions))
-
-if __name__ == '__main__':
-    app.run(debug=True,host="0.0.0.0",port=8595)
+if __name__ == "__main__":
+    app.run(debug=True)
