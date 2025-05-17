@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eurovision Voting</title>
+</head>
+<body>
+    <h1>Vote for Your Top 3 Countries</h1>
+    <form method="POST" action="/vote">
+        {% for country in countries %}
+            <label>
+                <input type="checkbox" name="votes" value="{{ country }}">
+                {{ country }}
+            </label><br>
+        {% endfor %}
+        <h2>Predict the Winner:</h2>
+        <select name="prediction">
+            {% for country in countries %}
+                <option value="{{ country }}">{{ country }}</option>
+            {% endfor %}
+        </select><br><br>
+        <button type="submit">Submit Vote</button>
+    </form>
+    <script>
+        document.querySelector('form').addEventListener('submit', function (e) {
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked');
+            if (checked.length !== 3) {
+                alert('Please select exactly 3 countries.');
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
